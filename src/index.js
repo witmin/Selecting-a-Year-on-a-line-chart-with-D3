@@ -46,7 +46,7 @@ const render = () => {
         yValue,
         nested,
         selectedYearDate: selectedYear,
-        titleText: 'A Week of Temperature Around the Region',
+        titleText: 'Population over Time by Region',
         xValue: d => d.year,
         xAxisLabel: 'Year',
         yAxisLabel: 'Population',
@@ -58,7 +58,7 @@ const render = () => {
     });
 
     colorLegendG
-        .attr('transform', `translate(720, 180)`)
+        .attr('transform', `translate(780, 180)`)
         .call(colorLegend, {
             colorScale,
             spacing: 24,

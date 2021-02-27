@@ -28,7 +28,7 @@ export const lineChart = (selection, props) => {
         setSelectedYear
     } = props;
 
-    const innerWidth = width - margin.left - margin.right - 180;
+    const innerWidth = width - margin.left - margin.right - 200;
     const innerHeight = height - margin.top - margin.bottom;
 
     const xScale = scaleTime()

@@ -1,4 +1,4 @@
-# Melting and Munging Data with JavaScript
+# Select a Year on a Line Chart
 Follow the video tutorial on FreeCodeCamp.org made by Curran Kelleher: https://www.youtube.com/watch?v=_8V5o2UHG0E&list=WL&index=1&t=43174s
 
 Data colors: https://sunlightfoundation.com/2014/03/12/datavizguide/

@@ -5382,7 +5382,7 @@
           setSelectedYear
       } = props;
 
-      const innerWidth = width - margin.left - margin.right - 180;
+      const innerWidth = width - margin.left - margin.right - 200;
       const innerHeight = height - margin.top - margin.bottom;
 
       const xScale = scaleTime()
@@ -5540,7 +5540,7 @@
           yValue,
           nested,
           selectedYearDate: selectedYear,
-          titleText: 'A Week of Temperature Around the Region',
+          titleText: 'Population over Time by Region',
           xValue: d => d.year,
           xAxisLabel: 'Year',
           yAxisLabel: 'Population',
@@ -5552,7 +5552,7 @@
       });
 
       colorLegendG
-          .attr('transform', `translate(720, 180)`)
+          .attr('transform', `translate(780, 180)`)
           .call(colorLegend, {
               colorScale,
               spacing: 24,
