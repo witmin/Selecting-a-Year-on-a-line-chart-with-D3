@@ -1,6 +1,6 @@
 import {csv, range, timeParse} from "d3";
 
-const parseYear = timeParse('%Y');
+export const parseYear = timeParse('%Y');
 const allCaps = str => str === str.toUpperCase();
 const isRegion = name => allCaps(name) && (name !== 'WORLD');
 

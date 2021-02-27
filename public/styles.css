@@ -31,3 +31,8 @@ text {
     font-weight: 600;
     text-transform: uppercase;
 }
+
+.selected-year-line {
+    stroke: #000000;
+    stroke-width: 5;
+}

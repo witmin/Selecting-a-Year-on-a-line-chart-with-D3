@@ -1084,6 +1084,8 @@
 
   var filterEvents = {};
 
+  var event = null;
+
   if (typeof document !== "undefined") {
     var element = document.documentElement;
     if (!("onmouseenter" in element)) {
@@ -1103,9 +1105,12 @@
 
   function contextListener(listener, index, group) {
     return function(event1) {
+      var event0 = event; // Events can be reentrant (e.g., focus).
+      event = event1;
       try {
         listener.call(this, this.__data__, index, group);
       } finally {
+        event = event0;
       }
     };
   }
@@ -1257,6 +1262,32 @@
     return typeof selector === "string"
         ? new Selection$1([[document.querySelector(selector)]], [document.documentElement])
         : new Selection$1([[selector]], root);
+  }
+
+  function sourceEvent() {
+    var current = event, source;
+    while (source = current.sourceEvent) current = source;
+    return current;
+  }
+
+  function point$1(node, event) {
+    var svg = node.ownerSVGElement || node;
+
+    if (svg.createSVGPoint) {
+      var point = svg.createSVGPoint();
+      point.x = event.clientX, point.y = event.clientY;
+      point = point.matrixTransform(node.getScreenCTM().inverse());
+      return [point.x, point.y];
+    }
+
+    var rect = node.getBoundingClientRect();
+    return [event.clientX - rect.left - node.clientLeft, event.clientY - rect.top - node.clientTop];
+  }
+
+  function mouse(node) {
+    var event = sourceEvent();
+    if (event.changedTouches) event = event.changedTouches[0];
+    return point$1(node, event);
   }
 
   function define(constructor, factory, prototype) {
@@ -5333,21 +5364,24 @@
 
   };
 
-  const svg = select('svg');
+  const lineChart = (selection, props) => {
+      const {
+          colorValue,
+          colorScale,
+          yValue,
+          data,
+          nested,
+          selectedYearDate,
+          titleText,
+          xValue,
+          xAxisLabel,
+          yAxisLabel,
+          margin,
+          width,
+          height,
+          setSelectedYear
+      } = props;
 
-  const width = +svg.attr('width');
-  const height = +svg.attr('height');
-
-  const render = data => {
-      const titleText = 'A Week of Temperature Around the Region';
-      const xValue = d => d.year;
-      const xAxisLabel = 'Year';
-      const yValue = d => d.population;
-      const yAxisLabel = 'Population';
-
-      const colorValue = d => d.name;
-
-      const margin = {top: 80, right: 0, bottom: 70, left: 105};
       const innerWidth = width - margin.left - margin.right - 180;
       const innerHeight = height - margin.top - margin.bottom;
 
@@ -5360,9 +5394,11 @@
           .range([innerHeight, 0])
           .nice();
 
-      const colorScale = ordinal(schemeCategory10);
-
-      const g = svg.append('g')
+      const g = selection.selectAll('.container').data([null]);
+      const gEnter = g.enter()
+          .append('g')
+          .attr('class', 'container');
+      gEnter.merge(g)
           .attr('transform', `translate(${margin.left},${margin.top})`);
 
       const xAxis = axisBottom(xScale)
@@ -5379,29 +5415,46 @@
           .tickPadding(10)
           .tickFormat(yAxisTickFormat);
 
-      const yAxisG = g.append('g').call(yAxis);
-      yAxisG.selectAll('.domain').remove();
+      const yAxisGEnter = gEnter
+          .append('g')
+          .attr('class', 'y-axis');
 
-      yAxisG.append('text')
+      const yAxisG = g.select('.y-axis');
+      yAxisGEnter
+          .merge(yAxisG)
+          .call(yAxis)
+          .selectAll('.domain').remove();
+
+      yAxisGEnter
+          .append('text')
           .attr('class', 'axis-label')
-          .attr('x', -innerHeight / 2)
           .attr('y', -65)
           .attr('fill', 'black')
           .attr('text-anchor', 'middle')
           .attr('transform', `rotate(-90)`)
+          .merge(yAxisG.select('.axis-label'))
+          .attr('x', -innerHeight / 2)
           .text(yAxisLabel);
 
+      const xAxisGEnter = gEnter
+          .append('g')
+          .attr('class', 'x-axis');
 
-      const xAxisG = g.append('g').call(xAxis)
-          .attr('transform', `translate(0, ${innerHeight})`);
+      const xAxisG = g.select('.x-axis');
 
-      xAxisG.select('.domain').remove();
+      xAxisGEnter
+          .merge(xAxisG)
+          .call(xAxis)
+          .attr('transform', `translate(0, ${innerHeight})`)
+          .select('.domain').remove();
 
-      xAxisG.append('text')
+      xAxisGEnter
+          .append('text')
           .attr('class', 'axis-label')
           .attr('y', 60)
-          .attr('x', innerWidth / 2)
           .attr('fill', 'black')
+          .merge(xAxisG.select('.axis-label'))
+          .attr('x', innerWidth / 2)
           .text(xAxisLabel);
 
       const lineGenerator = line()
@@ -5409,6 +5462,69 @@
           .y(d => yScale(yValue(d)))
           .curve(curveBasis);
 
+      const linePaths = g.merge(gEnter)
+          .selectAll('.line-path').data(nested);
+      linePaths
+          .enter().append('path')
+          .attr('class', 'line-path')
+          .merge(linePaths)
+          .attr('d', d => lineGenerator(d.values))
+          .attr('stroke', d => colorScale(d.key));
+
+      const selectedYear = parseYear(selectedYearDate);
+      // Selected Year
+      gEnter.append('line')
+          .attr('class', 'selected-year-line')
+          .attr('y1', 0)
+          .merge(g.select('.selected-year-line'))
+          .attr('x1', xScale(selectedYear))
+          .attr('x2', xScale(selectedYear))
+          .attr('y2', innerHeight);
+
+      gEnter
+          .append('text')
+          .attr('class', 'title')
+          .attr('y', -10)
+          .merge(g.select('.title'))
+          .text(titleText);
+
+      gEnter
+          .append('rect')
+          .attr('class', 'mouse-interceptor')
+          .attr('fill', 'none')
+          .attr('pointer-events', 'all')
+          .merge(g.select('.mouse-interceptor'))
+          .attr('width', innerWidth)
+          .attr('height', innerHeight)
+          .on('mousemove', function () {
+              const x = mouse(this)[0];
+              const hoveredDate = xScale.invert(x);
+              setSelectedYear(hoveredDate.getFullYear());
+              console.log(selectedYearDate);
+          });
+  };
+
+  const svg = select('svg');
+  const width = +svg.attr('width');
+  const height = +svg.attr('height');
+
+  const lineChartG = svg.append('g');
+  const colorLegendG = svg.append('g');
+
+  let selectedYear = 2018;
+
+  let data;
+
+  const setSelectedYear = year => {
+      selectedYear = year;
+      render();
+  };
+
+  const render = () => {
+
+      const yValue = d => d.population;
+      const colorValue = d => d.name;
+      const colorScale = ordinal(schemeCategory10);
       const lastYValue = d => yValue(d.values[d.values.length - 1]);
 
       const nested = nest()
@@ -5417,29 +5533,41 @@
           .sort((a, b) => descending(lastYValue(a), lastYValue(b)));
 
       colorScale.domain(nested.map(d => d.key));
-      console.log(nested);
 
-      g.selectAll('line-path').data(nested)
-          .enter().append('path')
-          .attr('class', 'line-path')
-          .attr('d', d => lineGenerator(d.values))
-          .attr('stroke', d => colorScale(d.key));
+      lineChartG.call(lineChart, {
+          colorScale,
+          colorValue,
+          yValue,
+          nested,
+          selectedYearDate: selectedYear,
+          titleText: 'A Week of Temperature Around the Region',
+          xValue: d => d.year,
+          xAxisLabel: 'Year',
+          yAxisLabel: 'Population',
+          margin: {top: 80, right: 0, bottom: 70, left: 105},
+          width,
+          height,
+          data,
+          setSelectedYear
+      });
 
-      g.append('text')
-          .attr('class', 'title')
-          .attr('y', -10)
-          .text(titleText);
-
-      svg.append('g')
+      colorLegendG
           .attr('transform', `translate(720, 180)`)
           .call(colorLegend, {
               colorScale,
               spacing: 24,
               textOffset: 16,
               circleRadius: 10
+
           });
+
+
   };
 
-  loadAndProcessData().then(render);
+  loadAndProcessData()
+      .then((loadedData) => {
+          data = loadedData;
+          render();
+      });
 
 }());
