@@ -10,7 +10,8 @@ const melt = (unData, minYear, maxYear) => {
     const data = [];
 
     unData.forEach(d => {
-        const name = d['Region, subregion, country or area *'];
+        const name = d['Region, subregion, country or area *']
+            .replace('AND THEN', '&');
 
         years.forEach(year => {
             const population = +d[year].replace(/ /g, '') * 1000;
@@ -35,26 +36,5 @@ export const loadAndProcessData = () => {
         .then(([unDataMediumVariant, unDataEstimates]) => {
             return melt(unDataEstimates, 1950, 2014)
                 .concat(melt(unDataMediumVariant, 2015, 2100));
-
-            // const rowById = unData.reduce((accumulator, d) => {
-            //     accumulator[d['Country code']] = d;
-            //     return accumulator;
-            // }, {});
-            //
-            // const countries = feature(topoJSONdata, topoJSONdata.objects.countries);
-            // countries.features.forEach(d => {
-            //     Object.assign(d.properties, rowById[+d.id]);
-            // });
-            //
-            // const featuresWithPopulation = countries.features
-            //     .filter(d => d.properties['2020'])
-            //     .map(d => {
-            //         d.properties['2020'] = +d.properties['2020'].replace(/ /g, '') * 1000;
-            //         return d;
-            //     });
-            //
-            // console.log(featuresWithPopulation);
-            //
-            // return {countries, featuresWithPopulation};
         });
 };

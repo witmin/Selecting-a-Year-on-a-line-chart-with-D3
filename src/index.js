@@ -22,7 +22,7 @@ const width = +svg.attr('width');
 const height = +svg.attr('height');
 
 const render = data => {
-    const titleText = 'A Week of Temperature Around the World';
+    const titleText = 'A Week of Temperature Around the Region';
     const xValue = d => d.year;
     const xAxisLabel = 'Year';
     const yValue = d => d.population;
@@ -36,8 +36,7 @@ const render = data => {
 
     const xScale = scaleTime()
         .domain(extent(data, xValue))
-        .range([0, innerWidth])
-        .nice();
+        .range([0, innerWidth]);
 
     const yScale = scaleLinear()
         .domain(extent(data, yValue))
@@ -115,11 +114,11 @@ const render = data => {
         .text(titleText);
 
     svg.append('g')
-        .attr('transform', `translate(800, 140)`)
+        .attr('transform', `translate(720, 180)`)
         .call(colorLegend, {
             colorScale,
-            spacing: 32,
-            textOffset: 22,
+            spacing: 24,
+            textOffset: 16,
             circleRadius: 10
         });
 };

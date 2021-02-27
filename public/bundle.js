@@ -5279,7 +5279,8 @@
       const data = [];
 
       unData.forEach(d => {
-          const name = d['Region, subregion, country or area *'];
+          const name = d['Region, subregion, country or area *']
+              .replace('AND THEN', '&');
 
           years.forEach(year => {
               const population = +d[year].replace(/ /g, '') * 1000;
@@ -5304,27 +5305,6 @@
           .then(([unDataMediumVariant, unDataEstimates]) => {
               return melt(unDataEstimates, 1950, 2014)
                   .concat(melt(unDataMediumVariant, 2015, 2100));
-
-              // const rowById = unData.reduce((accumulator, d) => {
-              //     accumulator[d['Country code']] = d;
-              //     return accumulator;
-              // }, {});
-              //
-              // const countries = feature(topoJSONdata, topoJSONdata.objects.countries);
-              // countries.features.forEach(d => {
-              //     Object.assign(d.properties, rowById[+d.id]);
-              // });
-              //
-              // const featuresWithPopulation = countries.features
-              //     .filter(d => d.properties['2020'])
-              //     .map(d => {
-              //         d.properties['2020'] = +d.properties['2020'].replace(/ /g, '') * 1000;
-              //         return d;
-              //     });
-              //
-              // console.log(featuresWithPopulation);
-              //
-              // return {countries, featuresWithPopulation};
           });
   };
 
@@ -5359,7 +5339,7 @@
   const height = +svg.attr('height');
 
   const render = data => {
-      const titleText = 'A Week of Temperature Around the World';
+      const titleText = 'A Week of Temperature Around the Region';
       const xValue = d => d.year;
       const xAxisLabel = 'Year';
       const yValue = d => d.population;
@@ -5373,8 +5353,7 @@
 
       const xScale = scaleTime()
           .domain(extent(data, xValue))
-          .range([0, innerWidth])
-          .nice();
+          .range([0, innerWidth]);
 
       const yScale = linear()
           .domain(extent(data, yValue))
@@ -5452,11 +5431,11 @@
           .text(titleText);
 
       svg.append('g')
-          .attr('transform', `translate(800, 140)`)
+          .attr('transform', `translate(720, 180)`)
           .call(colorLegend, {
               colorScale,
-              spacing: 32,
-              textOffset: 22,
+              spacing: 24,
+              textOffset: 16,
               circleRadius: 10
           });
   };
